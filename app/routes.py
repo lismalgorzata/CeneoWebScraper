@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -6,7 +7,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from flask import render_template, redirect, url_for, request
 from app import app
-import os
 
 def get_item(ancestor, selector, attribute=None, return_list=False):
     try:
@@ -45,19 +45,19 @@ def extract():
             response= requests.get(url)
             page= BeautifulSoup(response.text, "html.parser")
             opinions= page.select("div.js_product-review")
-            for opinion in opinions:       
+            for opinion in opinions:
                 single_opinion= {
                     key:get_item(opinion, *value)
                         for key, value in selectors.items()
                 }
                 single_opinion["opinion_id"]=opinion["data-entry-id"]
-                all_opinions.append(single_opinion)          
-            try: 
+                all_opinions.append(single_opinion)
+            try:
                 url= "https://www.ceneo.pl"+page.select_one("a.pagination__next")["href"]
             except TypeError:
-                url= None    
+                url= None
         if not os.path.exists("app/opinions"):
-            os.makedirs("app/opinions")  
+            os.makedirs("app/opinions")
         with open("app/opinions/"+product_id+".json", "w", encoding="UTF-8") as jsonfile:
             (json.dump(all_opinions, jsonfile, indent=4, ensure_ascii=False))
         return redirect(url_for('product', product_id=product_id))
@@ -67,7 +67,7 @@ def extract():
 def products():
     products= [filename.split(".")[0]for filename in os.listdir("app/opinions")]
     return render_template("products.html.jinja", products=products)
-    
+
 @app.route('/author')
 def author():
     return render_template("author.html.jinja")
@@ -83,8 +83,8 @@ def product(product_id):
         "average_score": opinions["stars"].mean().round(2),
     }
     if not os.path.exists("app/plots"):
-        os.makedirs("app/plots")  
-    
+        os.makedirs("app/plots")
+
     recommendation = opinions["recommendation"].value_counts(dropna=False).sort_index().reindex(["Nie polecam", "Polecam", None], fill_value=0)
     recommendation.plot.pie(
         label="",
@@ -105,6 +105,6 @@ def product(product_id):
     plt.ylabel("Liczba opinii")
     plt.grid(True, axis="y")
     plt.xticks(rotation=0)
-    plt.savefig("plots/"+product_number+"_stars.png")
+    plt.savefig("plots/"+product_id+"_stars.png")
     plt.close()
     return render_template("product.html.jinja",product_id=product_id, stats=stats, opinions=opinions)
