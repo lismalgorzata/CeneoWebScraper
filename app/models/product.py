@@ -1,7 +1,7 @@
 import json
+import os
 import requests
 from bs4 import BeautifulSoup
-import os
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
@@ -9,14 +9,14 @@ from app.models.opinion import Opinion
 from app.utils import get_item
 
 class Product():
-    def __init__(self, product_name='', product_id=self, opinions=[], opinions_number=0, pros_number=0, cons_number=0, average_stars=0, ):
-        self.product_name=product_name
-        self.product_id=product_id
-        self.opinions=opinions
-        self.opinions_number=opinions_number
-        self.pros_number=pros_number
-        self.cons_number=cons_number
-        self.average_stars=average_stars
+    def __init__(self, product_id, opinions=[], product_name="", opinions_count=0, pros_count=0, cons_count=0, average_score=0):
+        self.product_id = product_id
+        self.product_name = product_name
+        self.opinions = opinions
+        self.opinions_count = opinions_count
+        self.pros_count = pros_count
+        self.cons_count = cons_count
+        self.average_score = average_score
         return self
 
     def extract_name(self):
@@ -57,10 +57,8 @@ class Product():
 
     def draw_charts(self):
         opinions = self.opinions_to_df()
-
         if not os.path.exists("app/static/plots"):
             os.makedirs("app/static/plots")
-
         recommendation = opinions["recommendation"].value_counts(dropna=False).sort_index().reindex(["Nie polecam", "Polecam", None], fill_value=0)
         recommendation.plot.pie(
             label="",
@@ -84,3 +82,21 @@ class Product():
         plt.savefig("plots/"+self.product_id+"_stars.png")
         plt.close()
         return self
+
+    #def __str__(self) -> self:
+        #pass
+
+    #def __repr__(self) -> self:
+        #pass
+
+    #def to_dict(self) -> dict:
+        #pass
+
+    def export_opinions(self):
+        if not os.path.exists("app/opinions"):
+            os.makedirs("app/opinions")
+        with open(f"app/opinions/{self.product_id}.json", "w", encoding="UTF-8") as jasonfile:
+            json.dump([opinion.to_dict() for opinion in self.opinions], jasonfile, indent=4, ensure_ascii=False)
+
+    def export_product(self):
+        pass

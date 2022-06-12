@@ -1,7 +1,7 @@
-from app import app
-from flask import render_template, redirect, url_for, request
-import json
 import os
+import json
+from flask import render_template, redirect, url_for, request
+from app import app
 from app.models.product import Product
 
 @app.route('/')
@@ -19,15 +19,11 @@ def extract():
         else:
             pass
 
-        if not os.path.exists("app/opinions"):
-            os.makedirs("app/opinions")
-        with open("app/opinions/"+product_id+".json", "w", encoding="UTF-8") as jsonfile:
-            (json.dump(all_opinions, jsonfile, indent=4, ensure_ascii=False))
         return redirect(url_for('product', product_id=product_id))
     else:
         return render_template("extract.html.jinja")
 
-@app.route('/products/')
+@app.route('/products')
 def products():
     products= [filename.split(".")[0]for filename in os.listdir("app/opinions")]
     return render_template("products.html.jinja", products=products)
